@@ -1,6 +1,4 @@
 # Chain-Soc-Updates
-# ChainSOC -- Decentralized SIEM Prototype
-
 ## Project Overview
 
 ChainSOC is a decentralized Security Information and Event Management (SIEM) prototype designed to demonstrate a distributed approach to security monitoring. The system operates across three interconnected virtual machines, each fulfilling a distinct role in the log collection, analysis, and storage pipeline. The project simulates a real-world SOC environment where security events are generated, monitored, and securely archived through automated workflows.
