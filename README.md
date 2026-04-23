@@ -1,30 +1,30 @@
-# ChainSOC -- Prototype de SOC Distribue
+# ChainSOC -- Prototype de SOC Distribué
 
 ---
 
 ## 1. Objectif du projet
 
-ChainSOC est un prototype de centre de securite (SOC) distribue.
+ChainSOC est un prototype de centre de sécurité (SOC) distribué.
 
-L'objectif est simple : automatiser la surveillance des logs entre plusieurs machines, detecter les activites suspectes, generer des alertes, et stocker les logs de maniere securisee.
+L'objectif est simple : automatiser la surveillance des logs entre plusieurs machines, détecter les activités suspectes, générer des alertes, et stocker les logs de manière sécurisée.
 
-Le systeme repose sur trois machines virtuelles qui communiquent entre elles via SSH.
+Le système repose sur trois machines virtuelles qui communiquent entre elles via SSH.
 
 ---
 
 ## 2. Architecture
 
-Le projet utilise trois machines virtuelles interconnectees sur un reseau local :
+Le projet utilise trois machines virtuelles interconnectées sur un réseau local :
 
-| Machine   | Role                                            |
+| Machine   | Rôle                                            |
 |-----------|--------------------------------------------------|
-| Target    | Genere les logs et simule des activites suspectes |
-| Watcher   | Surveille, detecte les menaces, genere des alertes |
-| Vault     | Recoit et stocke les logs de maniere securisee    |
+| Target    | Génère les logs et simule des activités suspectes |
+| Watcher   | Surveille, détecte les menaces, génère des alertes |
+| Vault     | Reçoit et stocke les logs de manière sécurisée    |
 
 ```
 Target                    Watcher                    Vault
-(genere les logs)  --->  (recupere + analyse)  --->  (stocke les logs)
+(génère les logs)  --->  (récupère + analyse)  --->  (stocke les logs)
                           |
                           v
                      alerts.txt
@@ -32,108 +32,144 @@ Target                    Watcher                    Vault
 
 ---
 
-## 3. Ce que nous avons realise
+## 3. Ce que nous avons réalisé
 
-### Etape 1 -- Configuration reseau
+### Étape 1 -- Configuration réseau
 
-Les trois machines virtuelles ont ete configurees sur le meme reseau local avec des adresses IP statiques. La connectivite entre toutes les machines a ete testee et validee.
+Les trois machines virtuelles ont été configurées sur le même réseau local avec des adresses IP statiques. La connectivité entre toutes les machines a été testée et validée.
 
-### Etape 2 -- Communication SSH
+![Configuration réseau de la machine Target](screenshots/target_network_config.png)
 
-SSH a ete installe et active sur toutes les machines. Pour eviter de saisir un mot de passe a chaque connexion, nous avons mis en place une authentification par cle SSH avec `ssh-keygen` et `ssh-copy-id`. Cela permet au Watcher de se connecter automatiquement a Target et a Vault sans intervention humaine.
+![Configuration Netplan sur Target](screenshots/target_netplan_config.png)
 
-![Authentification SSH par cle reussie entre les machines](screenshots/watcher_ssh_key_auth_success.png)
+![Application de la configuration Netplan](screenshots/target_netplan_applied.png)
 
-### Etape 3 -- Generation de logs sur Target
+### Étape 2 -- Communication SSH
 
-Sur la machine Target, nous utilisons la commande `logger` pour generer des logs de test dans le journal systeme. Ces logs simulent une activite suspecte que le Watcher doit detecter.
+SSH a été installé et activé sur toutes les machines. Pour éviter de saisir un mot de passe à chaque connexion, nous avons mis en place une authentification par clé SSH avec `ssh-keygen` et `ssh-copy-id`. Cela permet au Watcher de se connecter automatiquement à Target et à Vault sans intervention humaine.
+
+![Installation et activation du service SSH sur Target](screenshots/target_ssh_service_setup.png)
+
+![Test de connexion SSH entre les machines](screenshots/target_ssh_connection_test.png)
+
+![Génération de la clé SSH sur le Watcher](screenshots/watcher_ssh_key_generation.png)
+
+![Authentification SSH par clé réussie entre les machines](screenshots/watcher_ssh_key_auth_success.png)
+
+![Connexion SSH du Watcher vers le Vault](screenshots/watcher_ssh_to_vault.png)
+
+### Étape 3 -- Génération de logs sur Target
+
+Sur la machine Target, nous utilisons la commande `logger` pour générer des logs de test dans le journal système. Ces logs simulent une activité suspecte que le Watcher doit détecter.
 
 ```bash
 logger "chainsoc_test_ALERT"
 ```
 
-### Etape 4 -- Recuperation automatique des logs
+![Génération de logs sur Target](screenshots/target_log_generation.png)
 
-Le script `check_logs.sh` sur le Watcher se connecte a Target via SSH et recupere les logs recents contenant le mot cle `chainsoc_test`.
+![Vérification des logs générés](screenshots/target_log_verification.png)
 
-### Etape 5 -- Envoi automatique vers Vault
+![Génération d'un log suspect pour le test](screenshots/target_suspicious_log_generation.png)
 
-Le script `send_to_vault.sh` fait tout en une seule execution : il recupere les logs, verifie si un log suspect est present, genere une alerte si necessaire, et envoie le log vers la machine Vault.
+### Étape 4 -- Récupération automatique des logs
 
-![Script send_to_vault.sh avec la logique de detection](screenshots/watcher_alert_detection_script.png)
+Le script `check_logs.sh` sur le Watcher se connecte à Target via SSH et récupère les logs récents contenant le mot clé `chainsoc_test`.
 
-### Etape 6 -- Generation d'alertes
+![Script check_logs.sh sur le Watcher](screenshots/watcher_check_logs_script.png)
 
-Quand le script detecte un log suspect, il affiche `"ALERT: Suspicious log detected!"` et enregistre le log dans `alerts.txt` sur le Watcher.
+![Récupération des logs via SSH](screenshots/watcher_ssh_log_retrieval.png)
 
-### Etape 7 -- Automatisation avec cron
+![Résultat de la récupération des logs](screenshots/watcher_log_retrieval_result.png)
 
-Le script `send_to_vault.sh` a ete ajoute au planificateur cron pour s'executer chaque minute :
+![Récupération automatisée des logs](screenshots/watcher_automated_log_retrieval.png)
+
+### Étape 5 -- Envoi automatique vers Vault
+
+Le script `send_to_vault.sh` fait tout en une seule exécution : il récupère les logs, vérifie si un log suspect est présent, génère une alerte si nécessaire, et envoie le log vers la machine Vault.
+
+![Script send_to_vault.sh avec la logique de détection](screenshots/watcher_alert_detection_script.png)
+
+![Exécution du script send_to_vault.sh](screenshots/watcher_send_to_vault_execution.png)
+
+### Étape 6 -- Génération d'alertes
+
+Quand le script détecte un log suspect, il affiche `"ALERT: Suspicious log detected!"` et enregistre le log dans `alerts.txt` sur le Watcher.
+
+![Résultat de la détection d'alertes](screenshots/watcher_alert_detection_result.png)
+
+### Étape 7 -- Automatisation avec cron
+
+Le script `send_to_vault.sh` a été ajouté au planificateur cron pour s'exécuter chaque minute :
 
 ```bash
 * * * * * /home/hajar/send_to_vault.sh
 ```
 
-Chaque minute, le systeme execute automatiquement : recuperation des logs, detection, creation d'alertes, envoi et stockage.
+Chaque minute, le système exécute automatiquement : récupération des logs, détection, création d'alertes, envoi et stockage.
 
-![Configuration cron pour l'execution automatique](screenshots/cron_automation_setup.png)
+![Configuration cron pour l'exécution automatique](screenshots/cron_automation_setup.png)
+
+![Log de test automatique sur Target](screenshots/target_auto_test_log.png)
 
 ---
 
-## 4. Scripts crees
+## 4. Scripts créés
 
 | Script              | Fonction                                                    |
 |---------------------|-------------------------------------------------------------|
-| `check_logs.sh`     | Recupere les logs recents depuis Target via SSH              |
-| `send_to_vault.sh`  | Detecte les logs suspects, genere des alertes, envoie vers Vault |
+| `check_logs.sh`     | Récupère les logs récents depuis Target via SSH              |
+| `send_to_vault.sh`  | Détecte les logs suspects, génère des alertes, envoie vers Vault |
 
 ---
 
-## 5. Test du systeme
+## 5. Test du système
 
-Pour prouver que l'automatisation fonctionne, nous avons realise le test suivant :
+Pour prouver que l'automatisation fonctionne, nous avons réalisé le test suivant :
 
-**1.** Generer un log suspect sur Target :
+**1.** Générer un log suspect sur Target :
 
 ```bash
 logger "chainsoc_test_FINAL"
 ```
 
-**2.** Attendre une minute (le temps que le cron s'execute).
+**2.** Attendre une minute (le temps que le cron s'exécute).
 
-**3.** Verifier les alertes sur Watcher :
+**3.** Vérifier les alertes sur Watcher :
 
 ```bash
 cat alerts.txt
 ```
 
-**4.** Verifier le stockage sur Vault :
+**4.** Vérifier le stockage sur Vault :
 
 ```bash
 cat vault_logs.txt
 ```
 
-Le log suspect a ete detecte, l'alerte a ete creee, et le log a ete stocke sur Vault automatiquement. Ce test prouve que le systeme fonctionne de bout en bout sans intervention manuelle.
+Le log suspect a été détecté, l'alerte a été créée, et le log a été stocké sur Vault automatiquement. Ce test prouve que le système fonctionne de bout en bout sans intervention manuelle.
 
-![Resultat du test : alertes detectees et logs stockes](screenshots/watcher_alert_detection_result.png)
+![Vérification du stockage des logs sur Vault](screenshots/vault_log_storage_verification.png)
+
+![Logs accumulés sur Vault via cron](screenshots/vault_cron_logs_accumulated.png)
 
 ---
 
-## 6. Resultat final
+## 6. Résultat final
 
-Le pipeline automatise fonctionne comme suit :
+Le pipeline automatisé fonctionne comme suit :
 
 ```
-Target genere un log
+Target génère un log
       |
       v
-Watcher recupere le log automatiquement
+Watcher récupère le log automatiquement
       |
       v
-Watcher detecte l'activite suspecte
+Watcher détecte l'activité suspecte
       |
       v
-Watcher genere une alerte (alerts.txt)
+Watcher génère une alerte (alerts.txt)
       |
       v
 Watcher envoie le log vers Vault
@@ -142,13 +178,13 @@ Watcher envoie le log vers Vault
 Vault stocke le log (vault_logs.txt)
 ```
 
-Tout ce cycle s'execute automatiquement chaque minute.
+Tout ce cycle s'exécute automatiquement chaque minute.
 
 ---
 
 ## 7. Limites actuelles
 
-Les composants suivants sont des implementations temporaires utilisees pour valider le fonctionnement du systeme :
+Les composants suivants sont des implémentations temporaires utilisées pour valider le fonctionnement du système :
 
 | Composant         | Statut                               |
 |-------------------|--------------------------------------|
@@ -159,15 +195,15 @@ Ces fichiers texte ont permis de tester et prouver le bon fonctionnement de l'au
 
 ---
 
-## 8. Ameliorations futures
+## 8. Améliorations futures
 
-- **IPFS** -- Stockage decentralise des logs
-- **Blockchain** -- Enregistrement des logs pour garantir leur integrite
-- **Smart contracts** -- Verification automatique via des contrats intelligents
-- **Dashboard** -- Interface de visualisation en temps reel
+- **IPFS** -- Stockage décentralisé des logs
+- **Blockchain** -- Enregistrement des logs pour garantir leur intégrité
+- **Smart contracts** -- Vérification automatique via des contrats intelligents
+- **Dashboard** -- Interface de visualisation en temps réel
 
 ---
 
 ## Conclusion
 
-ChainSOC demontre un prototype fonctionnel de SOC distribue. Le systeme collecte automatiquement les logs, detecte les activites suspectes, genere des alertes et stocke les donnees, le tout sans intervention manuelle. L'automatisation complete a ete validee par des tests concrets.
+ChainSOC démontre un prototype fonctionnel de SOC distribué. Le système collecte automatiquement les logs, détecte les activités suspectes, génère des alertes et stocke les données, le tout sans intervention manuelle. L'automatisation complète a été validée par des tests concrets.
