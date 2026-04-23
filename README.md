@@ -159,7 +159,7 @@ Ces fichiers texte ont permis de tester et prouver le bon fonctionnement de l'au
 
 ---
 
-## 8. Ameliorations futures
+## 8. Next improvments
 
 - **IPFS** -- Stockage decentralise des logs
 - **Blockchain** -- Enregistrement des logs pour garantir leur integrite
